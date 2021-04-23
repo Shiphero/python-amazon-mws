@@ -281,7 +281,7 @@ class InboundShipments(MWS):
 
     def update_inbound_shipment(self, shipment_id, shipment_name,
                                 destination, items=None, shipment_status='',
-                                label_preference='', case_required=False,
+                                label_preference='', case_required=None,
                                 box_contents_source=None):
         """
         Updates an existing inbound shipment in Amazon FBA.
@@ -318,10 +318,17 @@ class InboundShipments(MWS):
             'InboundShipmentHeader.ShipmentName': shipment_name,
             'InboundShipmentHeader.DestinationFulfillmentCenterId': destination,
             'InboundShipmentHeader.LabelPrepPreference': label_preference,
-            'InboundShipmentHeader.AreCasesRequired': case_required,
             'InboundShipmentHeader.ShipmentStatus': shipment_status,
             'InboundShipmentHeader.IntendedBoxContentsSource': box_contents_source,
         }
+        # https://docs.developer.amazonservices.com/en_US/fba_inbound/FBAInbound_Datatypes.html#InboundShipmentHeader
+        # This flag is optional unless the boxes in the shipment are case packed. ShipHero does not support that yet.
+        # This fixes InvalidRequestException: AreCasesRequired field can be updated only for an empty shipment,
+        # or a shipment with all zero quantity items
+        if case_required is not None:
+            data.update({
+                'InboundShipmentHeader.AreCasesRequired': case_required,
+            })
         data.update(from_address)
         if items:
             # Update with an items paramater only if they exist.
