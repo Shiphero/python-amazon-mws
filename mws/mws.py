@@ -305,22 +305,39 @@ class MWS(object):
 
         request_description = calc_request_description(params)
         signature = self.calc_signature(method, request_description)
-        url = "{domain}{uri}?{description}&Signature={signature}".format(
+        url_base = "{domain}{uri}".format(
             domain=self.domain,
             uri=self.uri,
+        )
+        url_data = "{description}&Signature={signature}".format(
             description=request_description,
             signature=quote(signature),
         )
-        headers = {'User-Agent': 'python-amazon-mws/{} (Language=Python)'.format(__version__)}
-        headers.update(kwargs.get('extra_headers', {}))
+        headers = {"User-Agent": "python-amazon-mws/{} (Language=Python)".format(__version__)}
+        headers.update(kwargs.get("extra_headers", {}))
+        body = kwargs.get("body", "")
+
+        if method == "POST":
+            url = url_base
+            body += url_data
+            headers.update({"Content-Type": "application/x-www-form-urlencoded"})
+        else:
+            url = url_base + "?" + url_data
 
         try:
-            # Some might wonder as to why i don't pass the params dict as the params argument to request.
+            # Some might wonder as to why i don"t pass the params dict as the params argument to request.
             # My answer is, here i have to get the url parsed string of params in order to sign it, so
             # if i pass the params dict as params to request, request will repeat that step because it will need
             # to convert the dict to a url parsed string, so why do it twice if i can just pass the full url :).
-            response = self.requester(method, url, data=kwargs.get(
-                'body', ''), headers=headers, proxies=proxies, timeout=kwargs.get('timeout', 300))
+            response = self.requester(
+                method,
+                url,
+                data=body,
+                headers=headers,
+                proxies=proxies,
+                timeout=kwargs.get("timeout", 300),
+                raise_for_status=False,
+             )
             response.raise_for_status()
             # When retrieving data from the response object,
             # be aware that response.content returns the content in bytes while response.text calls
@@ -328,8 +345,8 @@ class MWS(object):
 
             data = response.content
             # I do not check the headers to decide which content structure to server simply because sometimes
-            # Amazon's MWS API returns XML error responses with "text/plain" as the Content-Type.
-            rootkey = kwargs.get('rootkey', extra_data.get("Action") + "Result")
+            # Amazon"s MWS API returns XML error responses with "text/plain" as the Content-Type.
+            rootkey = kwargs.get("rootkey", extra_data.get("Action") + "Result")
             try:
                 try:
                     parsed_response = DictWrapper(data, rootkey)
