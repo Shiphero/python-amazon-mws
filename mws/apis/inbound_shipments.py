@@ -429,7 +429,7 @@ class InboundShipments(MWS):
         else:
             data = self._transport_details_non_partnered(shipment_type, data, **kwargs)
 
-        return self.make_request(data, method="POST")
+        return self.make_request(data, method="POST", use_body_params=True)
 
     def _transport_details_partnered(self, shipment_type, data, **kwargs):
         if shipment_type == "SP":

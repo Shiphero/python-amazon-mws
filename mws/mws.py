@@ -289,7 +289,7 @@ class MWS(object):
         # need a branch test to check for auth_token being skipped (no key present)
         return params
 
-    def make_request(self, extra_data, method="GET", **kwargs):
+    def make_request(self, extra_data, method="GET", use_body_params=False, **kwargs):
         """
         Make request to Amazon MWS API with these parameters
         """
@@ -311,9 +311,9 @@ class MWS(object):
         headers.update(kwargs.get("extra_headers", {}))
         body = kwargs.get("body", "")
 
-        if method == "POST":
+        if method == "POST" and use_body_params:
             url = url_base
-            body += url_data
+            body = str(body) + url_data
             headers.update({"Content-Type": "application/x-www-form-urlencoded"})
         else:
             url = url_base + "?" + url_data
